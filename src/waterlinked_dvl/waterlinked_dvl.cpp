@@ -12,7 +12,6 @@ WaterlinkedDvl::WaterlinkedDvl() :
 {
 
     m_pnh.param<std::string>("ip", m_ip, "192.168.194.95"); // This value is set to fallback ip address
-    m_ip = "192.168.0.12";
     m_pnh.param<int>("port", m_port, 16171);
 
     m_transducer_publisher = m_nh.advertise<waterlinked_dvl::TransducerReportStamped>("transducer_report",1000);
