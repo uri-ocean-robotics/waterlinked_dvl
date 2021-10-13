@@ -23,6 +23,9 @@ WaterlinkedDvl::WaterlinkedDvl() :
 
     m_socket.connect(endpoint);
 
+    boost::asio::socket_base::receive_buffer_size option(81920);
+    m_socket.set_option(option);
+
     m_reading_thread = boost::thread(
         boost::bind(&WaterlinkedDvl::f_readloop, this)
     );
@@ -30,10 +33,11 @@ WaterlinkedDvl::WaterlinkedDvl() :
 
 
 void WaterlinkedDvl::f_readloop() {
+    boost::asio::streambuf incoming;
     while(ros::ok()) {
-        boost::asio::streambuf incoming;
         boost::system::error_code error;
         std::size_t n_read = boost::asio::read_until(m_socket, incoming, '\n', error);
+
 
         if(error.failed()) {
             continue;
@@ -43,9 +47,11 @@ void WaterlinkedDvl::f_readloop() {
         std::string str(boost::asio::buffers_begin(bufs),
                         boost::asio::buffers_begin(bufs) + n_read);
 
+        incoming.consume(n_read);
         boost::thread t{
             boost::bind(&WaterlinkedDvl::f_parse_and_publish, this, str)
         };
+
     }
 }
 
