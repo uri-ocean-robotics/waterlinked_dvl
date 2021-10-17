@@ -7,3 +7,4 @@ waterlinked_dvl/Transducer[] transducers
 bool velocity_valid
 int32 status
 string format
+float64 time

@@ -70,6 +70,7 @@ void WaterlinkedDvl::f_parse_and_publish(std::string incoming) {
             waterlinked_dvl::TransducerReportStamped msg;
             msg.header.stamp = now;
 
+            msg.report.time = root["time"].asFloat();
             msg.report.altitude = root["altitude"].asFloat();
             msg.report.status = root["status"].asInt();
             msg.report.fom = root["fom"].asFloat();
