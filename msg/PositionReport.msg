@@ -7,3 +7,4 @@ float64 pitch
 float64 yaw
 int32 status
 string format
+float64 time

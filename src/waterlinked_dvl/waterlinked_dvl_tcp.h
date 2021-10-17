@@ -1,12 +1,12 @@
-#ifndef WATERLINKED_DVL_WATERLINKED_DVL_H
-#define WATERLINKED_DVL_WATERLINKED_DVL_H
+#ifndef WATERLINKED_DVL_TCP_H
+#define WATERLINKED_DVL_TCP_H
 
 #include "ros/ros.h"
 #include "boost/asio.hpp"
 #include "boost/thread.hpp"
 #include "thread"
 
-class WaterlinkedDvl {
+class WaterlinkedDvlTcp {
 private:
 
     ros::NodeHandle m_nh;
@@ -31,9 +31,9 @@ private:
 
 public:
 
-    WaterlinkedDvl();
+    WaterlinkedDvlTcp();
 
 };
 
 
-#endif //WATERLINKED_DVL_WATERLINKED_DVL_H
+#endif

@@ -1,11 +1,11 @@
-#include "waterlinked_dvl.h"
+#include "waterlinked_dvl_tcp.h"
 #include "json/json.h"
 #include "algorithm"
 #include "string"
 #include "waterlinked_dvl/TransducerReportStamped.h"
 #include "waterlinked_dvl/PositionReportStamped.h"
 
-WaterlinkedDvl::WaterlinkedDvl() :
+WaterlinkedDvlTcp::WaterlinkedDvlTcp() :
         m_nh(),
         m_pnh("~"),
         m_socket(m_io_context)
@@ -27,12 +27,12 @@ WaterlinkedDvl::WaterlinkedDvl() :
     m_socket.set_option(option);
 
     m_reading_thread = boost::thread(
-        boost::bind(&WaterlinkedDvl::f_readloop, this)
+        boost::bind(&WaterlinkedDvlTcp::f_readloop, this)
     );
 }
 
 
-void WaterlinkedDvl::f_readloop() {
+void WaterlinkedDvlTcp::f_readloop() {
     boost::asio::streambuf incoming;
     while(ros::ok()) {
         boost::system::error_code error;
@@ -49,13 +49,13 @@ void WaterlinkedDvl::f_readloop() {
 
         incoming.consume(n_read);
         boost::thread t{
-            boost::bind(&WaterlinkedDvl::f_parse_and_publish, this, str)
+            boost::bind(&WaterlinkedDvlTcp::f_parse_and_publish, this, str)
         };
 
     }
 }
 
-void WaterlinkedDvl::f_parse_and_publish(std::string incoming) {
+void WaterlinkedDvlTcp::f_parse_and_publish(std::string incoming) {
 
     auto now = ros::Time::now();
 
@@ -109,7 +109,7 @@ void WaterlinkedDvl::f_parse_and_publish(std::string incoming) {
             msg.report.roll = root["roll"].asFloat();
             msg.report.pitch = root["pitch"].asFloat();
             msg.report.yaw = root["yaw"].asFloat();
-
+            msg.report.time = root["time"].asFloat();
             msg.report.std = root["std"].asFloat();
 
             m_position_publisher.publish(msg);

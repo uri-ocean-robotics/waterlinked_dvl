@@ -136,10 +136,14 @@ include_directories(
 #   src/${PROJECT_NAME}/waterlinked_dvl.cpp
 # )
 
+add_executable(${PROJECT_NAME}_tcp_node src/waterlinked_dvl_tcp_node.cpp src/waterlinked_dvl/waterlinked_dvl_tcp.cpp)
+add_dependencies(${PROJECT_NAME}_tcp_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}_tcp_node ${catkin_LIBRARIES} ${JSONCPP_LIBRARIES})
 
-add_executable(${PROJECT_NAME}_node src/waterlinked_dvl_node.cpp src/waterlinked_dvl/waterlinked_dvl.cpp)
-add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES} ${JSONCPP_LIBRARIES})
+
+add_executable(${PROJECT_NAME}_serial_node src/waterlinked_dvl_serial_node.cpp src/waterlinked_dvl/waterlinked_dvl_serial.cpp)
+add_dependencies(${PROJECT_NAME}_serial_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}_serial_node ${catkin_LIBRARIES} ${JSONCPP_LIBRARIES})
 
 
 #############
