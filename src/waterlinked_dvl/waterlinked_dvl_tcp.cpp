@@ -8,7 +8,7 @@
 WaterlinkedDvlTcp::WaterlinkedDvlTcp() :
         m_nh(),
         m_pnh("~"),
-        m_socket(m_io_context)
+        m_socket(m_io_service)
 {
 
     m_pnh.param<std::string>("ip", m_ip, "192.168.194.95"); // This value is set to fallback ip address
@@ -39,7 +39,7 @@ void WaterlinkedDvlTcp::f_readloop() {
         std::size_t n_read = boost::asio::read_until(m_socket, incoming, '\n', error);
 
 
-        if(error.failed()) {
+        if(error.value() != 0) {
             continue;
         }
 
