@@ -156,7 +156,7 @@ void WaterlinkedDvlTcp::f_parse_and_publish(std::string incoming) {
             pose_msg.pose.pose.orientation.y = quaternion.y();
             pose_msg.pose.pose.orientation.z = quaternion.z();
             if(m_position_covariance.size() == pose_msg.pose.covariance.size()) {
-                pose_msg.pose.covariance = as_array<pose_msg.pose.covariance.size()>(m_velocity_covariance);
+                pose_msg.pose.covariance = as_array<pose_msg.pose.covariance.size()>(m_position_covariance);
             }
             m_pose_publisher.publish(pose_msg);
 
