@@ -15,6 +15,11 @@ private:
     boost::asio::io_service m_io_service;
     boost::asio::ip::tcp::socket m_socket;
 
+    std::string m_frame_id;
+
+    std::vector<double> m_velocity_covariance;
+
+    std::vector<double> m_position_covariance;
 
     std::string m_ip;
     int m_port;
@@ -25,9 +30,13 @@ private:
 
     boost::thread m_reading_thread;
 
-    ros::Publisher m_transducer_publisher;
+    ros::Publisher m_transducer_report_publisher;
 
-    ros::Publisher m_position_publisher;
+    ros::Publisher m_pose_publisher;
+
+    ros::Publisher m_position_report_publisher;
+
+    ros::Publisher m_twist_publisher;
 
 public:
 

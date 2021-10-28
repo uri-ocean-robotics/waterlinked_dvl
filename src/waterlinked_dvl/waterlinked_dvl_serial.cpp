@@ -1,7 +1,11 @@
+#include <geometry_msgs/TwistWithCovarianceStamped.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <tf2/LinearMath/Quaternion.h>
 #include "waterlinked_dvl_serial.h"
 #include "ros/console.h"
 #include "boost/crc.hpp"
 #include "thread"
+#include "utils.hpp"
 
 
 WaterlinkedDvlSerial::WaterlinkedDvlSerial()
@@ -20,10 +24,17 @@ WaterlinkedDvlSerial::WaterlinkedDvlSerial()
     m_ser_port.set_option(boost::asio::serial_port_base::baud_rate(115200));
 
 
-    m_transducer_report_publisher = m_nh.advertise<waterlinked_dvl::TransducerReportStamped>("transducer_report", 1000);
-    m_transducers_publisher = m_nh.advertise<waterlinked_dvl::TransducerReportStamped>("transducer_distance_report", 1000);
-    m_position_report_publisher = m_nh.advertise<waterlinked_dvl::PositionReportStamped>("position_report", 1000);
+    m_transducer_report_publisher = m_nh.advertise<waterlinked_dvl::TransducerReportStamped>("dvl/transducer_report", 1000);
+    m_transducers_publisher = m_nh.advertise<waterlinked_dvl::TransducerReportStamped>("dvl/transducer_distance_report", 1000);
+    m_position_report_publisher = m_nh.advertise<waterlinked_dvl::PositionReportStamped>("dvl/position_report", 1000);
+    m_twist_publisher = m_nh.advertise<geometry_msgs::TwistWithCovarianceStamped>("dvl/twist", 1000);
 
+    m_pose_publisher = m_nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("dvl/pose", 1000);
+
+
+    m_pnh.param<std::vector<double>>("velocity_covariance", m_velocity_covariance, std::vector<double>({}));
+
+    m_pnh.param<std::vector<double>>("position_covariance", m_position_covariance, std::vector<double>({}));
 
     std::thread obj([this](){
         while(ros::ok()) {
@@ -73,7 +84,16 @@ void WaterlinkedDvlSerial::f_serial_parse(std::string incoming) {
         report.report.status = elems[8].at(0) == '1';
 
         m_transducer_report_publisher.publish(report);
+        geometry_msgs::TwistWithCovarianceStamped twist_msg;
+        twist_msg.header = report.header;
+        twist_msg.twist.twist.linear.x = report.report.vx;
+        twist_msg.twist.twist.linear.y = report.report.vy;
+        twist_msg.twist.twist.linear.z = report.report.vz;
 
+        if(m_velocity_covariance.size() == twist_msg.twist.covariance.size()) {
+            twist_msg.twist.covariance = as_array<twist_msg.twist.covariance.size()>(m_velocity_covariance);
+        }
+        m_twist_publisher.publish(twist_msg);
     } if(elems.front() == "wrp") {
         waterlinked_dvl::PositionReportStamped report;
         report.header.frame_id = m_frame_id;
@@ -88,6 +108,26 @@ void WaterlinkedDvlSerial::f_serial_parse(std::string incoming) {
         report.report.yaw = std::stof(elems[8]);
 
         m_position_report_publisher.publish(report);
+
+
+        tf2::Quaternion quaternion;
+        quaternion.setRPY(report.report.roll, report.report.pitch, report.report.yaw);
+        quaternion.normalize();
+
+        geometry_msgs::PoseWithCovarianceStamped pose_msg;
+        pose_msg.header = report.header;
+        pose_msg.pose.pose.position.x = report.report.x;
+        pose_msg.pose.pose.position.y = report.report.y;
+        pose_msg.pose.pose.position.z = report.report.z;
+
+        pose_msg.pose.pose.orientation.w = quaternion.w();
+        pose_msg.pose.pose.orientation.x = quaternion.x();
+        pose_msg.pose.pose.orientation.y = quaternion.y();
+        pose_msg.pose.pose.orientation.z = quaternion.z();
+        if(m_position_covariance.size() == pose_msg.pose.covariance.size()) {
+            pose_msg.pose.covariance = as_array<pose_msg.pose.covariance.size()>(m_position_covariance);
+        }
+        m_pose_publisher.publish(pose_msg);
 
     } else {
         ROS_WARN_STREAM("Error");

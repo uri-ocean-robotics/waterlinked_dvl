@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   message_generation
+  tf2
 )
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(JSONCPP jsoncpp)
