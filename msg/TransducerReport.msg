@@ -8,3 +8,6 @@ bool velocity_valid
 int32 status
 string format
 float64 time
+float64[9] covariance
+time time_of_validity
+time time_of_transmission

@@ -5,14 +5,23 @@
 #include "boost/asio.hpp"
 #include "boost/thread.hpp"
 #include "thread"
+#include "json/json.h"
+#include "boost/thread/recursive_mutex.hpp"
+#include "waterlinked_dvl/DVLConfig.h"
+#include "dynamic_reconfigure/server.h"
+#include "std_srvs/SetBool.h"
+#include "waterlinked_dvl/Config.h"
+#include "waterlinked_dvl/GetConfig.h"
 
 class WaterlinkedDvlTcp {
 private:
 
     ros::NodeHandle m_nh;
+
     ros::NodeHandle m_pnh;
 
     boost::asio::io_service m_io_service;
+
     boost::asio::ip::tcp::socket m_socket;
 
     std::string m_frame_id;
@@ -21,12 +30,21 @@ private:
 
     std::vector<double> m_position_covariance;
 
+    boost::shared_ptr<dynamic_reconfigure::Server<waterlinked_dvl::DVLConfig>> m_dynconf_server;
+
     std::string m_ip;
+
     int m_port;
 
-    void f_readloop();
+    void f_read_loop();
+
+    bool f_write(std::string &msg);
 
     void f_parse_and_publish(std::string incoming);
+
+    void f_parse_json_v2(Json::Value root);
+
+    void f_parse_json_v3(Json::Value root);
 
     boost::thread m_reading_thread;
 
@@ -37,6 +55,45 @@ private:
     ros::Publisher m_position_report_publisher;
 
     ros::Publisher m_twist_publisher;
+
+    boost::recursive_mutex m_dynconf_lock;
+
+    ros::ServiceServer m_acoustics_enabled_service;
+
+    ros::ServiceServer m_get_last_response_service;
+
+    ros::ServiceServer m_acquire_running_config;
+
+    int m_speed_of_sound;
+
+    int m_mounting_rotation_offset;
+
+    bool m_acoustics_enabled;
+
+    void f_amend_dynconf();
+
+    void f_callback_dynconf(waterlinked_dvl::DVLConfig &config, uint32_t level);
+
+    waterlinked_dvl::Config m_last_response;
+
+    waterlinked_dvl::Config m_running_config;
+
+    bool f_callback_acoustics_enabled(std_srvs::SetBool::Request& req,
+                                      std_srvs::SetBool::Response& res);
+
+    bool f_callback_get_last_response(waterlinked_dvl::GetConfig::Request& req,
+                                      waterlinked_dvl::GetConfig::Response& res);
+
+    bool f_amend_sound_speed(int speed_of_sound);
+
+    bool f_amend_acoustics_enabled(bool enabled);
+
+    bool f_amend_mounting_rotation(int rotation);
+
+    bool f_callback_running_config(waterlinked_dvl::GetConfig::Request& req,
+                                   waterlinked_dvl::GetConfig::Response& res);
+
+    bool f_acquire_running_config();
 
 public:
 

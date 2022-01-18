@@ -12,22 +12,29 @@ class WaterlinkedDvlSerial {
 
 private:
     ros::NodeHandle m_nh;
+
     ros::NodeHandle m_pnh;
 
     std::string m_frame_id;
 
     boost::asio::io_service m_io;
+
     boost::asio::serial_port m_ser_port;
 
     std::vector<double> m_velocity_covariance;
 
     std::vector<double> m_position_covariance;
+
     ros::Publisher m_transducer_report_publisher;
+
     ros::Publisher m_transducers_publisher;
+
     ros::Publisher m_position_report_publisher;
+
     ros::Publisher m_pose_publisher;
 
     ros::Publisher m_twist_publisher;
+
     bool f_checksum(const std::string& incoming);
 
     std::string f_serial_read();

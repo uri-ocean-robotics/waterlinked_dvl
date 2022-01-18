@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   message_generation
   tf2
+  dynamic_reconfigure
 )
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(JSONCPP jsoncpp)
@@ -61,14 +62,14 @@ add_message_files(
     TransducerStamped.msg
     TransducerReport.msg
     TransducerReportStamped.msg
+    Config.msg
 )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+    GetConfig.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -82,6 +83,7 @@ generate_messages(
   DEPENDENCIES
     sensor_msgs
     std_msgs
+    ${PROJECT_NAME}
 )
 
 ################################################
@@ -99,10 +101,9 @@ generate_messages(
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+generate_dynamic_reconfigure_options(
+  cfg/DVLConfig.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -138,13 +139,13 @@ include_directories(
 # )
 
 add_executable(${PROJECT_NAME}_tcp_node src/waterlinked_dvl_tcp_node.cpp src/waterlinked_dvl/waterlinked_dvl_tcp.cpp)
-add_dependencies(${PROJECT_NAME}_tcp_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME}_tcp_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
 target_link_libraries(${PROJECT_NAME}_tcp_node ${catkin_LIBRARIES} ${JSONCPP_LIBRARIES})
 
 
-add_executable(${PROJECT_NAME}_serial_node src/waterlinked_dvl_serial_node.cpp src/waterlinked_dvl/waterlinked_dvl_serial.cpp)
-add_dependencies(${PROJECT_NAME}_serial_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME}_serial_node ${catkin_LIBRARIES} ${JSONCPP_LIBRARIES})
+# add_executable(${PROJECT_NAME}_serial_node src/waterlinked_dvl_serial_node.cpp src/waterlinked_dvl/waterlinked_dvl_serial.cpp)
+# add_dependencies(${PROJECT_NAME}_serial_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
+# target_link_libraries(${PROJECT_NAME}_serial_node ${catkin_LIBRARIES} ${JSONCPP_LIBRARIES})
 
 
 #############
