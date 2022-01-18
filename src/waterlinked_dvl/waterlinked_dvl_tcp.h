@@ -62,15 +62,15 @@ private:
 
     ros::ServiceServer m_get_last_response_service;
 
-    ros::ServiceServer m_acquire_running_config;
+    ros::ServiceServer m_get_running_config_service;
 
     int m_speed_of_sound;
 
     int m_mounting_rotation_offset;
 
-    bool m_acoustics_enabled;
+    bool m_acoustic_enabled;
 
-    void f_amend_dynconf();
+    void f_amend_dynconf(int speed_of_sound, int mounting_offset, bool acoustic_enabled);
 
     void f_callback_dynconf(waterlinked_dvl::DVLConfig &config, uint32_t level);
 
@@ -86,7 +86,7 @@ private:
 
     bool f_amend_sound_speed(int speed_of_sound);
 
-    bool f_amend_acoustics_enabled(bool enabled);
+    bool f_amend_acoustic_enabled(bool enabled);
 
     bool f_amend_mounting_rotation(int rotation);
 
@@ -94,6 +94,8 @@ private:
                                    waterlinked_dvl::GetConfig::Response& res);
 
     bool f_acquire_running_config();
+
+    void f_apply_config();
 
 public:
 

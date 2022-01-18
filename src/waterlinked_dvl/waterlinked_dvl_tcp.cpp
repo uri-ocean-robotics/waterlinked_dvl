@@ -28,7 +28,7 @@ WaterlinkedDvlTcp::WaterlinkedDvlTcp() :
 
     m_pnh.param<int>("mounting_rotation_offset", m_mounting_rotation_offset, 0);
 
-    m_pnh.param<bool>("acoustics_enabled", m_acoustics_enabled, false);
+    m_pnh.param<bool>("acoustics_enabled", m_acoustic_enabled, false);
 
     m_twist_publisher = m_nh.advertise<geometry_msgs::TwistWithCovarianceStamped>("dvl/twist", 1000);
 
@@ -58,7 +58,19 @@ WaterlinkedDvlTcp::WaterlinkedDvlTcp() :
         )
     );
 
+    m_get_running_config_service = m_nh.advertiseService<waterlinked_dvl::GetConfig::Request, waterlinked_dvl::GetConfig::Response>(
+            "get_running_config",
+            boost::bind(
+                &WaterlinkedDvlTcp::f_callback_running_config,
+                this,
+                boost::placeholders::_1,
+                boost::placeholders::_2
+            )
+    );
+
     m_dynconf_server = boost::make_shared<dynamic_reconfigure::Server<waterlinked_dvl::DVLConfig>>(m_dynconf_lock);
+
+    m_dynconf_server->setCallback(boost::bind(&WaterlinkedDvlTcp::f_callback_dynconf, this, boost::placeholders::_1, boost::placeholders::_2));
 
     boost::asio::ip::tcp::endpoint  endpoint(
             boost::asio::ip::address::from_string(m_ip), m_port);
@@ -71,6 +83,8 @@ WaterlinkedDvlTcp::WaterlinkedDvlTcp() :
     m_reading_thread = boost::thread(
         boost::bind(&WaterlinkedDvlTcp::f_read_loop, this)
     );
+
+    f_apply_config();
 }
 
 
@@ -232,11 +246,11 @@ void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root)
             msg.header.stamp = now;
             msg.header.frame_id = m_frame_id;
 
-            msg.report.time = root["time"].asFloat();
             msg.report.vx = root["vx"].asFloat();
             msg.report.vy = root["vy"].asFloat();
             msg.report.vz = root["vz"].asFloat();
             msg.report.fom = root["fom"].asFloat();
+            msg.report.time = root["ts"].asFloat();
 
             int index = 0;
             for(Json::Value::ArrayIndex i = 0 ;  i != root["covariance"].size() ; i++) {
@@ -300,7 +314,7 @@ void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root)
             msg.report.roll = root["roll"].asFloat();
             msg.report.pitch = root["pitch"].asFloat();
             msg.report.yaw = root["yaw"].asFloat();
-            msg.report.time = root["time"].asFloat();
+            msg.report.time = root["ts"].asFloat();
             msg.report.std = root["std"].asFloat();
 
             msg.report.format = root["format"].asString();
@@ -355,23 +369,22 @@ void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root)
 
 }
 
-void WaterlinkedDvlTcp::f_amend_dynconf() {
+void WaterlinkedDvlTcp::f_amend_dynconf(int speed_of_sound, int mounting_offset, bool acoustic_enabled) {
     boost::recursive_mutex::scoped_lock lock(m_dynconf_lock);
 
     waterlinked_dvl::DVLConfig conf;
 
     conf.speed_of_sound = m_speed_of_sound;
-    conf.acoustics_enabled = m_acoustics_enabled;
+    conf.acoustic_enabled = m_acoustic_enabled;
     conf.mounting_rotation_offset = m_mounting_rotation_offset;
 
     m_dynconf_server->updateConfig(conf);
 }
 
 void WaterlinkedDvlTcp::f_callback_dynconf(waterlinked_dvl::DVLConfig &config, uint32_t level) {
-
-    if(m_acoustics_enabled != config.acoustics_enabled) {
-        f_amend_acoustics_enabled(config.acoustics_enabled);
-        m_acoustics_enabled = config.acoustics_enabled;
+    if(m_acoustic_enabled != config.acoustic_enabled) {
+        f_amend_acoustic_enabled(config.acoustic_enabled);
+        m_acoustic_enabled = config.acoustic_enabled;
     }
 
     if(m_mounting_rotation_offset != config.mounting_rotation_offset) {
@@ -386,14 +399,14 @@ void WaterlinkedDvlTcp::f_callback_dynconf(waterlinked_dvl::DVLConfig &config, u
 
 }
 
-bool WaterlinkedDvlTcp::f_amend_acoustics_enabled(bool enabled) {
+bool WaterlinkedDvlTcp::f_amend_acoustic_enabled(bool enabled) {
 
     Json::Value config_msg;
 
     config_msg["command"] = "set_config";
 
     Json::Value parameters;
-    parameters["acoustics_enabled"] = enabled;
+    parameters["acoustic_enabled"] = enabled;
     config_msg["parameters"] = parameters;
 
 
@@ -441,13 +454,19 @@ bool WaterlinkedDvlTcp::f_amend_mounting_rotation(int rotation) {
 bool WaterlinkedDvlTcp::f_callback_acoustics_enabled(std_srvs::SetBool::Request &req,
                                                      std_srvs::SetBool::Response &res) {
 
-    bool result = f_amend_acoustics_enabled(req.data);
-
-    res.success = result;
+    m_last_response.response_to.clear();
     res.message = std::string() + "Acoustics " + (req.data ? "enabled" : "disabled");
-
-    return result;
-
+    bool result = f_amend_acoustic_enabled(req.data);
+    if(!result) {
+        res.success = result;
+        return false;
+    }
+    ros::Rate r(10);
+    while(m_last_response.response_to != "set_config") {
+        r.sleep();
+    }
+    res.success = m_last_response.success;
+    return res.success;
 }
 
 bool WaterlinkedDvlTcp::f_callback_get_last_response(waterlinked_dvl::GetConfig::Request &req,
@@ -461,7 +480,14 @@ bool WaterlinkedDvlTcp::f_callback_get_last_response(waterlinked_dvl::GetConfig:
 bool WaterlinkedDvlTcp::f_callback_running_config(waterlinked_dvl::GetConfig::Request &req,
                                                   waterlinked_dvl::GetConfig::Response &res) {
 
+    f_acquire_running_config();
+    ros::Rate r(10);
+    while (m_running_config.response_to != "get_config") {
+        r.sleep();
+    }
     res.config = m_running_config;
+
+    m_running_config.response_to.clear();
 
     return true;
 }
@@ -476,4 +502,37 @@ bool WaterlinkedDvlTcp::f_acquire_running_config() {
     auto msg = fast_writer.write(config_msg);
 
     return f_write(msg);
+}
+
+void WaterlinkedDvlTcp::f_apply_config() {
+
+    ros::Rate r(1);
+
+    while (true) {
+        f_acquire_running_config();
+        r.sleep();
+
+        if(m_running_config.speed_of_sound != m_speed_of_sound) {
+            f_amend_sound_speed(m_speed_of_sound);
+        }
+
+        if(m_running_config.mounting_rotation != m_mounting_rotation_offset) {
+            f_amend_mounting_rotation(m_mounting_rotation_offset);
+        }
+
+        if(m_running_config.acoustic_enabled != m_acoustic_enabled) {
+            f_amend_acoustic_enabled(m_acoustic_enabled);
+        }
+
+        if(
+                m_running_config.speed_of_sound == m_speed_of_sound &&
+                m_running_config.acoustic_enabled == m_acoustic_enabled &&
+                m_running_config.mounting_rotation == m_mounting_rotation_offset
+                ) {
+            break;
+        }
+    }
+
+    f_amend_dynconf(m_speed_of_sound, m_mounting_rotation_offset, m_acoustic_enabled);
+
 }
