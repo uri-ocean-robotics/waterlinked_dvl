@@ -178,17 +178,18 @@ void WaterlinkedDvlTcp::f_parse_json_v2(Json::Value root) {
 
             m_transducer_report_publisher.publish(msg);
 
-            geometry_msgs::TwistWithCovarianceStamped twist_msg;
-            twist_msg.header = msg.header;
-            twist_msg.twist.twist.linear.x = msg.report.vx;
-            twist_msg.twist.twist.linear.y = msg.report.vy;
-            twist_msg.twist.twist.linear.z = msg.report.vz;
+            if(msg.report.velocity_valid) {
+                geometry_msgs::TwistWithCovarianceStamped twist_msg;
+                twist_msg.header = msg.header;
+                twist_msg.twist.twist.linear.x = msg.report.vx;
+                twist_msg.twist.twist.linear.y = msg.report.vy;
+                twist_msg.twist.twist.linear.z = msg.report.vz;
 
-            if(m_velocity_covariance.size() == twist_msg.twist.covariance.size()) {
-                twist_msg.twist.covariance = as_array<twist_msg.twist.covariance.size()>(m_velocity_covariance);
+                if (m_velocity_covariance.size() == twist_msg.twist.covariance.size()) {
+                    twist_msg.twist.covariance = as_array<twist_msg.twist.covariance.size()>(m_velocity_covariance);
+                }
+                m_twist_publisher.publish(twist_msg);
             }
-            m_twist_publisher.publish(twist_msg);
-
         } else if (type == "position_local") {
             waterlinked_dvl::PositionReportStamped msg;
             msg.header.stamp = now;
@@ -221,9 +222,14 @@ void WaterlinkedDvlTcp::f_parse_json_v2(Json::Value root) {
             pose_msg.pose.pose.orientation.x = quaternion.x();
             pose_msg.pose.pose.orientation.y = quaternion.y();
             pose_msg.pose.pose.orientation.z = quaternion.z();
-            if (m_position_covariance.size() == 36) {
-                pose_msg.pose.covariance = as_array<36>(m_position_covariance);
-            }
+
+            pose_msg.pose.covariance[0] = pow(msg.report.std, 2);
+            pose_msg.pose.covariance[6 * 1 + 1] = pow(msg.report.std, 2);
+            pose_msg.pose.covariance[6 * 2 + 2] = pow(msg.report.std, 2);
+            pose_msg.pose.covariance[6 * 3 + 3] = std::numeric_limits<double>::infinity();
+            pose_msg.pose.covariance[6 * 4 + 4] = std::numeric_limits<double>::infinity();
+            pose_msg.pose.covariance[6 * 5 + 5] = std::numeric_limits<double>::infinity();
+
             m_pose_publisher.publish(pose_msg);
         }
     } catch (Json::LogicError &e) {
@@ -288,17 +294,18 @@ void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root)
 
             m_transducer_report_publisher.publish(msg);
 
-            geometry_msgs::TwistWithCovarianceStamped twist_msg;
-            twist_msg.header = msg.header;
-            twist_msg.twist.twist.linear.x = msg.report.vx;
-            twist_msg.twist.twist.linear.y = msg.report.vy;
-            twist_msg.twist.twist.linear.z = msg.report.vz;
+            if(msg.report.velocity_valid) {
+                geometry_msgs::TwistWithCovarianceStamped twist_msg;
+                twist_msg.header = msg.header;
+                twist_msg.twist.twist.linear.x = msg.report.vx;
+                twist_msg.twist.twist.linear.y = msg.report.vy;
+                twist_msg.twist.twist.linear.z = msg.report.vz;
 
-            if(m_velocity_covariance.size() == twist_msg.twist.covariance.size()) {
-                twist_msg.twist.covariance = as_array<twist_msg.twist.covariance.size()>(m_velocity_covariance);
+                if (m_velocity_covariance.size() == twist_msg.twist.covariance.size()) {
+                    twist_msg.twist.covariance = as_array<twist_msg.twist.covariance.size()>(m_velocity_covariance);
+                }
+                m_twist_publisher.publish(twist_msg);
             }
-            m_twist_publisher.publish(twist_msg);
-
         }
         else if (type == "position_local")
         {
@@ -335,9 +342,14 @@ void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root)
             pose_msg.pose.pose.orientation.x = quaternion.x();
             pose_msg.pose.pose.orientation.y = quaternion.y();
             pose_msg.pose.pose.orientation.z = quaternion.z();
-            if (m_position_covariance.size() == 36) {
-                pose_msg.pose.covariance = as_array<36>(m_position_covariance);
-            }
+
+            pose_msg.pose.covariance[0] = pow(msg.report.std, 2);
+            pose_msg.pose.covariance[6 * 1 + 1] = pow(msg.report.std, 2);
+            pose_msg.pose.covariance[6 * 2 + 2] = pow(msg.report.std, 2);
+            pose_msg.pose.covariance[6 * 3 + 3] = std::numeric_limits<double>::infinity();
+            pose_msg.pose.covariance[6 * 4 + 4] = std::numeric_limits<double>::infinity();
+            pose_msg.pose.covariance[6 * 5 + 5] = std::numeric_limits<double>::infinity();
+
             m_pose_publisher.publish(pose_msg);
         }
         else if (type == "response")
