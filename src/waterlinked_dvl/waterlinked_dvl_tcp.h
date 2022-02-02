@@ -97,6 +97,8 @@ private:
 
     void f_apply_config();
 
+    static constexpr double TO_RADIAN = 0.017453292519943295;
+
 public:
 
     WaterlinkedDvlTcp();

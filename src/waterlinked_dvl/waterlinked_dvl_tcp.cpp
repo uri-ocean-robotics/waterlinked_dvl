@@ -209,7 +209,7 @@ void WaterlinkedDvlTcp::f_parse_json_v2(Json::Value root) {
             m_position_report_publisher.publish(msg);
 
             tf2::Quaternion quaternion;
-            quaternion.setRPY(msg.report.roll, msg.report.pitch, msg.report.yaw);
+            quaternion.setRPY(msg.report.roll * TO_RADIAN, msg.report.pitch * TO_RADIAN, msg.report.yaw * TO_RADIAN);
             quaternion.normalize();
 
             geometry_msgs::PoseWithCovarianceStamped pose_msg;
@@ -329,7 +329,7 @@ void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root)
             m_position_report_publisher.publish(msg);
 
             tf2::Quaternion quaternion;
-            quaternion.setRPY(msg.report.roll, msg.report.pitch, msg.report.yaw);
+            quaternion.setRPY(msg.report.roll * TO_RADIAN, msg.report.pitch * TO_RADIAN, msg.report.yaw * TO_RADIAN);
             quaternion.normalize();
 
             geometry_msgs::PoseWithCovarianceStamped pose_msg;

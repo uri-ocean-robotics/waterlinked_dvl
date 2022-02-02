@@ -5,6 +5,8 @@
 #include "vector"
 #include "boost/range/algorithm/copy.hpp"
 
+
+
 template<size_t Size, class Container>
 boost::array<typename Container::value_type, Size> as_array(const Container &cont)
 {
