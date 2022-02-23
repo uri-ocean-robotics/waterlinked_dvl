@@ -226,9 +226,6 @@ void WaterlinkedDvlTcp::f_parse_json_v2(Json::Value root) {
             pose_msg.pose.covariance[0] = pow(msg.report.std, 2);
             pose_msg.pose.covariance[6 * 1 + 1] = pow(msg.report.std, 2);
             pose_msg.pose.covariance[6 * 2 + 2] = pow(msg.report.std, 2);
-            pose_msg.pose.covariance[6 * 3 + 3] = std::numeric_limits<double>::infinity();
-            pose_msg.pose.covariance[6 * 4 + 4] = std::numeric_limits<double>::infinity();
-            pose_msg.pose.covariance[6 * 5 + 5] = std::numeric_limits<double>::infinity();
 
             m_pose_publisher.publish(pose_msg);
         }
@@ -346,9 +343,6 @@ void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root)
             pose_msg.pose.covariance[0] = pow(msg.report.std, 2);
             pose_msg.pose.covariance[6 * 1 + 1] = pow(msg.report.std, 2);
             pose_msg.pose.covariance[6 * 2 + 2] = pow(msg.report.std, 2);
-            pose_msg.pose.covariance[6 * 3 + 3] = std::numeric_limits<double>::infinity();
-            pose_msg.pose.covariance[6 * 4 + 4] = std::numeric_limits<double>::infinity();
-            pose_msg.pose.covariance[6 * 5 + 5] = std::numeric_limits<double>::infinity();
 
             m_pose_publisher.publish(pose_msg);
         }
