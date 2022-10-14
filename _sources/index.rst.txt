@@ -7,7 +7,9 @@ Welcome to Waterlinked DVL ROS Driver Documentation!
 ====================================================
 
 .. toctree::
-   readme_link.rst
+
+.. include:: ../README.md
+    :parser: myst_parser.sphinx_
 
 
 .. Indices and tables
