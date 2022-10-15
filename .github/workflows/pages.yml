@@ -21,7 +21,7 @@ jobs:
         pip install -r docs/requirements.txt
 
     - name: Build and Commit
-      uses: sphinx-notes/pages@v2
+      uses: incebellipipo/pages@v2
       with:
         requirements_path: docs/requirements.txt
 
