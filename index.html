@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to Waterlinked DVL ROS Driver Documentation! &mdash; Waterlinked DVL ROS Driver  documentation</title>
+  <title>Waterlinked DVL ROS Driver &mdash; Waterlinked DVL ROS Driver  documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/tooltipster.custom.css" type="text/css" />
@@ -50,7 +50,15 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <!-- Local TOC -->
               <div class="local-toc"><ul>
-<li><a class="reference internal" href="#">Welcome to Waterlinked DVL ROS Driver Documentation!</a></li>
+<li><a class="reference internal" href="#">Waterlinked DVL ROS Driver</a><ul>
+<li><a class="reference internal" href="#ros-interface">ROS Interface</a><ul>
+<li><a class="reference internal" href="#topics">Topics</a></li>
+<li><a class="reference internal" href="#parameters">Parameters</a></li>
+<li><a class="reference internal" href="#services">Services</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </div>
         </div>
@@ -67,9 +75,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="#" class="icon icon-home"></a> &raquo;</li>
-      <li>Welcome to Waterlinked DVL ROS Driver Documentation!</li>
+      <li>Waterlinked DVL ROS Driver</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/index.md.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -77,9 +85,53 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="welcome-to-waterlinked-dvl-ros-driver-documentation">
-<h1>Welcome to Waterlinked DVL ROS Driver Documentation!<a class="headerlink" href="#welcome-to-waterlinked-dvl-ros-driver-documentation" title="Permalink to this heading"></a></h1>
-<div class="toctree-wrapper compound">
+  <div class="toctree-wrapper compound">
+</div>
+<div class="section" id="waterlinked-dvl-ros-driver">
+<h1>Waterlinked DVL ROS Driver<a class="headerlink" href="#waterlinked-dvl-ros-driver" title="Permalink to this heading"></a></h1>
+<p>This repository contains ROS Driver for Waterlinked DVL.</p>
+<p><img alt="DVL Image" src="https://waterlinkshop.wpenginepowered.com/wp-content/uploads/2021/12/wl-21035-3_dvl-a50_side4_1600.jpg" /></p>
+<p>The driver currently supports TCP communication.
+The project is safety use yet the interface is subject to change.</p>
+<div class="section" id="ros-interface">
+<h2>ROS Interface<a class="headerlink" href="#ros-interface" title="Permalink to this heading"></a></h2>
+<div class="section" id="topics">
+<h3>Topics<a class="headerlink" href="#topics" title="Permalink to this heading"></a></h3>
+<ul>
+<li><p>Topic: <code class="docutils literal notranslate"><span class="pre">dvl/twist</span></code></p>
+<p>Message Type: <code class="docutils literal notranslate"><span class="pre">geometry_msgs::TwistWithCovarianceStamped</span></code></p>
+</li>
+<li><p>Topic: <code class="docutils literal notranslate"><span class="pre">dvl/pose</span></code></p>
+<p>Message Type: <code class="docutils literal notranslate"><span class="pre">geometry_msgs::PoseWithCovarianceStamped</span></code></p>
+</li>
+<li><p>Topic: <code class="docutils literal notranslate"><span class="pre">dvl/transducer_report</span></code></p>
+<p>Message Type: <code class="docutils literal notranslate"><span class="pre">waterlinked_dvl::TransducerReportStamped</span></code></p>
+</li>
+<li><p>Topic: <code class="docutils literal notranslate"><span class="pre">dvl/position_report</span></code></p>
+<p>Message Type: <code class="docutils literal notranslate"><span class="pre">waterlinked_dvl::PositionReportStamped</span></code></p>
+</li>
+</ul>
+</div>
+<div class="section" id="parameters">
+<h3>Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ip</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">frame_id</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">velocity_covariance</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">position_covariance</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">speed_of_sound</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mouting_rotation_offset</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">acoustics_enabled</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="services">
+<h3>Services<a class="headerlink" href="#services" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">acoustics_enabled</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_last_response</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_running_config</span></code></p></li>
+</ul>
+</div>
 </div>
 </div>
 
