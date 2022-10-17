@@ -7,6 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 import sphinx_rtd_theme
+import myst_parser
 
 project = 'Waterlinked DVL ROS Driver'
 copyright = '2022, URI Ocean Robotics'
@@ -26,12 +27,15 @@ extensions = [
     'hoverxref.extension',
 ]
 
-templates_path = ['_templates']
+# templates_path = ['_templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-source_suffix = ['.rst', '.md']
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'markdown',
+}
 
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
