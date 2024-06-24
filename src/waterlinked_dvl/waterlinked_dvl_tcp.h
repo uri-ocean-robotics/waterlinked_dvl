@@ -56,6 +56,8 @@ private:
 
     ros::Publisher m_twist_publisher;
 
+    ros::Publisher m_raw_twist_publisher;
+
     boost::recursive_mutex m_dynconf_lock;
 
     ros::ServiceServer m_acoustics_enabled_service;
