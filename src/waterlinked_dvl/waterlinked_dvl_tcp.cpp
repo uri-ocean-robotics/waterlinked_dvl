@@ -6,6 +6,7 @@
 #include "waterlinked_dvl/PositionReportStamped.h"
 #include "geometry_msgs/TwistWithCovarianceStamped.h"
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
+#include "geometry_msgs/PointStamped.h"
 #include "utils.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 
@@ -39,6 +40,8 @@ WaterlinkedDvlTcp::WaterlinkedDvlTcp() :
     m_transducer_report_publisher = m_nh.advertise<waterlinked_dvl::TransducerReportStamped>("dvl/transducer_report", 1000);
 
     m_position_report_publisher = m_nh.advertise<waterlinked_dvl::PositionReportStamped>("dvl/position_report", 1000);
+
+    m_altitude_publisher = m_nh.advertise<geometry_msgs::PointStamped>("dv/altitude",1000);
 
     m_acoustics_enabled_service = m_nh.advertiseService<std_srvs::SetBool::Request, std_srvs::SetBool::Response>(
             "acoustics_enabled",
@@ -267,7 +270,17 @@ void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root)
 
             msg.report.altitude = root["altitude"].asFloat();
 
+            geometry_msgs::PointStamped alt_msg;
+            if(msg.report.altitude>0)
+            {
+                alt_msg.header = msg.header;
+                alt_msg.point.x = 0;
+                alt_msg.point.y = 0;
+                alt_msg.point.z = msg.report.altitude;
+                m_altitude_publisher.publish(alt_msg);
 
+            }
+            
             auto transducers_json = root["transducers"];
             for (Json::Value::ArrayIndex i = 0; i != transducers_json.size(); i++) {
                 waterlinked_dvl::Transducer transducer;
