@@ -301,15 +301,17 @@ void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root)
             twist_msg.twist.twist.linear.y = msg.report.vy;
             twist_msg.twist.twist.linear.z = msg.report.vz;
 
-            twist_msg.twist.covariance[18] = msg.report.covariance[0];
-            twist_msg.twist.covariance[19] = msg.report.covariance[1];
-            twist_msg.twist.covariance[20] = msg.report.covariance[2];
-            twist_msg.twist.covariance[24] = msg.report.covariance[3];
-            twist_msg.twist.covariance[25] = msg.report.covariance[4];
-            twist_msg.twist.covariance[26] = msg.report.covariance[5];
-            twist_msg.twist.covariance[30] = msg.report.covariance[6];
-            twist_msg.twist.covariance[31] = msg.report.covariance[7];
-            twist_msg.twist.covariance[32] = msg.report.covariance[8];
+            //Twist Covariance holds in its diagnol: u,v,w,p,q,r.
+            //Msg report covariance is in u,v,w (3x3)
+            twist_msg.twist.covariance[0] = msg.report.covariance[0];
+            twist_msg.twist.covariance[1] = msg.report.covariance[1];
+            twist_msg.twist.covariance[2] = msg.report.covariance[2];
+            twist_msg.twist.covariance[6] = msg.report.covariance[3];
+            twist_msg.twist.covariance[7] = msg.report.covariance[4];
+            twist_msg.twist.covariance[8] = msg.report.covariance[5];
+            twist_msg.twist.covariance[12] = msg.report.covariance[6];
+            twist_msg.twist.covariance[13] = msg.report.covariance[7];
+            twist_msg.twist.covariance[14] = msg.report.covariance[8];
 
             m_raw_twist_publisher.publish(twist_msg);
 
