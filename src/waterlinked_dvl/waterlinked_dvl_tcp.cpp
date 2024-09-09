@@ -41,7 +41,7 @@ WaterlinkedDvlTcp::WaterlinkedDvlTcp() :
 
     m_position_report_publisher = m_nh.advertise<waterlinked_dvl::PositionReportStamped>("dvl/position_report", 1000);
 
-    m_altitude_publisher = m_nh.advertise<geometry_msgs::PointStamped>("dv/altitude",1000);
+    m_altitude_publisher = m_nh.advertise<geometry_msgs::PointStamped>("dvl/altitude",1000);
 
     m_acoustics_enabled_service = m_nh.advertiseService<std_srvs::SetBool::Request, std_srvs::SetBool::Response>(
             "acoustics_enabled",
