@@ -31,6 +31,10 @@ WaterlinkedDvlTcp::WaterlinkedDvlTcp() :
 
     m_pnh.param<bool>("acoustics_enabled", m_acoustic_enabled, false);
 
+    m_pnh.param<std::string>("range_mode", m_range_mode, "auto");
+
+    m_pnh.param<bool>("periodic_cycling_enabled", m_periodic_cycling_enabled, true);
+
     m_twist_publisher = m_nh.advertise<geometry_msgs::TwistWithCovarianceStamped>("dvl/twist", 1000);
 
     m_raw_twist_publisher = m_nh.advertise<geometry_msgs::TwistWithCovarianceStamped>("dvl/raw_twist", 1000);
@@ -133,11 +137,14 @@ void WaterlinkedDvlTcp::f_parse_and_publish(std::string incoming) {
         reader.parse(incoming, root);
 
         auto format = root["format"].asString();
-        if(format == "json_v2") {
+
+        if(format.find("v2") != std::string::npos) {
             f_parse_json_v2(root);
-        } else if (format == "json_v3") {
-            f_parse_json_v3(root);
-        } else {
+        }
+        else if (format.find("v3") != std::string::npos) {
+            f_parse_json_v3(root); 
+        }
+        else {
             ROS_WARN_STREAM("Incoming message couldn't be parsed!: unknown format (" << format << ")");
         }
 
@@ -259,7 +266,7 @@ void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root)
             msg.report.vy = root["vy"].asFloat();
             msg.report.vz = root["vz"].asFloat();
             msg.report.fom = root["fom"].asFloat();
-            msg.report.time = root["ts"].asFloat();
+            msg.report.time = root["time"].asFloat();
 
             int index = 0;
             for(Json::Value::ArrayIndex i = 0 ;  i != root["covariance"].size() ; i++) {
@@ -278,7 +285,6 @@ void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root)
                 alt_msg.point.y = 0;
                 alt_msg.point.z = msg.report.altitude;
                 m_altitude_publisher.publish(alt_msg);
-
             }
             
             auto transducers_json = root["transducers"];
@@ -385,8 +391,10 @@ void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root)
         }
         else if (type == "response")
         {
-
+                                                                           
             auto response_to = root["response_to"].asString();
+            printf("response: %s\n", response_to.c_str());
+
             if(response_to == "set_config") {
                 m_last_response.response_to = response_to;
                 m_last_response.success = root["success"].asBool();
@@ -402,6 +410,10 @@ void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root)
                 m_running_config.speed_of_sound = root["result"]["speed_of_sound"].asInt();
                 m_running_config.acoustic_enabled = root["result"]["acoustic_enabled"].asBool();
                 m_running_config.mounting_rotation = root["result"]["mounting_rotation_offset"].asInt();
+                auto range_mode = root["result"]["range_mode"].asString();
+                auto periodic = root["result"]["periodic_cycling_enabled"].asBool();
+                std::cout<<"range : "<<range_mode<<std::endl;
+                std::cout<<"periodic_cycling_enabled : "<<periodic<<std::endl;
             } else {
 
             }
@@ -425,6 +437,7 @@ void WaterlinkedDvlTcp::f_amend_dynconf(int speed_of_sound, int mounting_offset,
 }
 
 void WaterlinkedDvlTcp::f_callback_dynconf(waterlinked_dvl::DVLConfig &config, uint32_t level) {
+
     if(m_acoustic_enabled != config.acoustic_enabled) {
         f_amend_acoustic_enabled(config.acoustic_enabled);
         m_acoustic_enabled = config.acoustic_enabled;
