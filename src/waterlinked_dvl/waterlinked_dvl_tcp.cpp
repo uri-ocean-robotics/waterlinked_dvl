@@ -437,6 +437,8 @@ void WaterlinkedDvlTcp::f_amend_dynconf(int speed_of_sound, int mounting_offset,
 }
 
 void WaterlinkedDvlTcp::f_callback_dynconf(waterlinked_dvl::DVLConfig &config, uint32_t level) {
+  ROS_INFO("Reconfigure Request: %s", 
+            config.range_mode.c_str());
 
     if(m_acoustic_enabled != config.acoustic_enabled) {
         f_amend_acoustic_enabled(config.acoustic_enabled);
