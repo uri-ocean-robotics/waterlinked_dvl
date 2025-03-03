@@ -334,15 +334,6 @@ void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root)
             m_raw_twist_publisher.publish(twist_msg);
 
             if(msg.report.velocity_valid) {
-                geometry_msgs::TwistWithCovarianceStamped twist_msg;
-                twist_msg.header = msg.header;
-                twist_msg.twist.twist.linear.x = msg.report.vx;
-                twist_msg.twist.twist.linear.y = msg.report.vy;
-                twist_msg.twist.twist.linear.z = msg.report.vz;
-
-                if (m_velocity_covariance.size() == twist_msg.twist.covariance.size()) {
-                    twist_msg.twist.covariance = as_array<twist_msg.twist.covariance.size()>(m_velocity_covariance);
-                }
                 m_twist_publisher.publish(twist_msg);
             }
         }
