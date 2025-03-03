@@ -30,6 +30,8 @@ private:
 
     std::vector<double> m_position_covariance;
 
+    int m_time_type;
+
     boost::shared_ptr<dynamic_reconfigure::Server<waterlinked_dvl::DVLConfig>> m_dynconf_server;
 
     std::string m_ip;

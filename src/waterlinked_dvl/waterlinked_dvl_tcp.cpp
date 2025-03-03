@@ -35,6 +35,8 @@ WaterlinkedDvlTcp::WaterlinkedDvlTcp() :
 
     m_pnh.param<bool>("periodic_cycling_enabled", m_periodic_cycling_enabled, true);
 
+    m_pnh.param<int>("time_type", m_time_type, 0);
+
     m_twist_publisher = m_nh.advertise<geometry_msgs::TwistWithCovarianceStamped>("dvl/twist", 1000);
 
     m_raw_twist_publisher = m_nh.advertise<geometry_msgs::TwistWithCovarianceStamped>("dvl/raw_twist", 1000);
@@ -247,8 +249,7 @@ void WaterlinkedDvlTcp::f_parse_json_v2(Json::Value root) {
 
 }
 
-void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root)
-{
+void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root){
 
     auto now = ros::Time::now();
     try
@@ -257,8 +258,11 @@ void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root)
 
         if(type == "velocity")
         {
+            // ============================================================= //
+            // parse all the data
+            // ============================================================= //
+
             waterlinked_dvl::TransducerReportStamped msg;
-            msg.header.stamp = now;
             msg.header.frame_id = m_frame_id;
 
             msg.report.vx = root["vx"].asFloat();
@@ -275,16 +279,6 @@ void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root)
             }
 
             msg.report.altitude = root["altitude"].asFloat();
-
-            geometry_msgs::PointStamped alt_msg;
-            if(msg.report.altitude>0)
-            {
-                alt_msg.header = msg.header;
-                alt_msg.point.x = 0;
-                alt_msg.point.y = 0;
-                alt_msg.point.z = msg.report.altitude;
-                m_altitude_publisher.publish(alt_msg);
-            }
             
             auto transducers_json = root["transducers"];
             for (Json::Value::ArrayIndex i = 0; i != transducers_json.size(); i++) {
@@ -310,7 +304,35 @@ void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root)
 
             msg.report.time_of_transmission.fromNSec(root["time_of_transmission"].asUInt64() * 1000U);
 
-            m_transducer_report_publisher.publish(msg);
+            //! DEBUG:
+            // printf("ros now: %.9f, validity:%.9f, trans:%.9f\n", 
+            //     now.toSec(), 
+            //     msg.report.time_of_validity.toSec(), 
+            //     msg.report.time_of_transmission.toSec());
+
+            // ============================================================= //
+            // setup the time type
+            // ============================================================= //
+
+            if(m_time_type == 0) {
+                msg.header.stamp = now;
+            }
+            else if (m_time_type == 1) {
+                if (msg.report.time_of_transmission.toSec() - now.toSec() > 5.0) {
+                    ROS_ERROR("DVL is not time synchronized, do not use this time_type!");
+                }                
+                msg.header.stamp = msg.report.time_of_validity;
+            }
+            else if (m_time_type == 2) {
+                if (msg.report.time_of_transmission.toSec() - now.toSec() > 5.0) {
+                    ROS_ERROR("DVL is not time synchronized, do not use this time_type!");
+                }
+                msg.header.stamp = msg.report.time_of_transmission;
+            }
+
+            // ============================================================= //
+            // publish the msg
+            // ============================================================= //
 
             //Raw Twist
             geometry_msgs::TwistWithCovarianceStamped twist_msg;
@@ -331,11 +353,27 @@ void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root)
             twist_msg.twist.covariance[13] = msg.report.covariance[7];
             twist_msg.twist.covariance[14] = msg.report.covariance[8];
 
+            //Publish the raw twist msg
             m_raw_twist_publisher.publish(twist_msg);
 
             if(msg.report.velocity_valid) {
+                //Publish the valid twist msg
                 m_twist_publisher.publish(twist_msg);
             }
+
+            //Publish the altitude msg
+            geometry_msgs::PointStamped alt_msg;
+            if(msg.report.altitude>0)
+            {
+                alt_msg.header = msg.header;
+                alt_msg.point.x = 0;
+                alt_msg.point.y = 0;
+                alt_msg.point.z = msg.report.altitude;
+                m_altitude_publisher.publish(alt_msg);
+            }
+
+            //Publish the report msg
+            m_transducer_report_publisher.publish(msg);            
         }
         else if (type == "position_local")
         {
