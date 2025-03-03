@@ -78,7 +78,11 @@ private:
 
     bool m_periodic_cycling_enabled;
 
-    void f_amend_dynconf(int speed_of_sound, int mounting_offset, bool acoustic_enabled);
+    void f_amend_dynconf(int speed_of_sound, 
+                         int mounting_offset, 
+                         bool acoustic_enabled, 
+                         std::string range_mode, 
+                         bool periodic_cycling_enabled);
 
     void f_callback_dynconf(waterlinked_dvl::DVLConfig &config, uint32_t level);
 
@@ -97,6 +101,10 @@ private:
     bool f_amend_acoustic_enabled(bool enabled);
 
     bool f_amend_mounting_rotation(int rotation);
+
+    bool f_amend_range_mode(std::string range_mode);
+
+    bool f_amend_periodic_cycling(bool enabled);    
 
     bool f_callback_running_config(waterlinked_dvl::GetConfig::Request& req,
                                    waterlinked_dvl::GetConfig::Response& res);

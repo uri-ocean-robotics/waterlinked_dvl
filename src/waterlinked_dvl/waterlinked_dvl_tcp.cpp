@@ -96,7 +96,6 @@ WaterlinkedDvlTcp::WaterlinkedDvlTcp() :
     f_apply_config();
 }
 
-
 void WaterlinkedDvlTcp::f_read_loop() {
     boost::asio::streambuf incoming;
     while(ros::ok()) {
@@ -393,7 +392,6 @@ void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root)
         {
                                                                            
             auto response_to = root["response_to"].asString();
-            printf("response: %s\n", response_to.c_str());
 
             if(response_to == "set_config") {
                 m_last_response.response_to = response_to;
@@ -410,21 +408,23 @@ void WaterlinkedDvlTcp::f_parse_json_v3(Json::Value root)
                 m_running_config.speed_of_sound = root["result"]["speed_of_sound"].asInt();
                 m_running_config.acoustic_enabled = root["result"]["acoustic_enabled"].asBool();
                 m_running_config.mounting_rotation = root["result"]["mounting_rotation_offset"].asInt();
-                auto range_mode = root["result"]["range_mode"].asString();
-                auto periodic = root["result"]["periodic_cycling_enabled"].asBool();
-                std::cout<<"range : "<<range_mode<<std::endl;
-                std::cout<<"periodic_cycling_enabled : "<<periodic<<std::endl;
+                m_running_config.range_mode = root["result"]["range_mode"].asString();
+                m_running_config.periodic_cycling_enabled = root["result"]["periodic_cycling_enabled"].asBool();
             } else {
-
+                ROS_INFO("%s: wrong response!", ros::this_node::getName().c_str());
             }
         }
     } catch (Json::LogicError &e) {
 
     }
-
 }
 
-void WaterlinkedDvlTcp::f_amend_dynconf(int speed_of_sound, int mounting_offset, bool acoustic_enabled) {
+void WaterlinkedDvlTcp::f_amend_dynconf(int speed_of_sound, 
+                                        int mounting_offset, 
+                                        bool acoustic_enabled, 
+                                        std::string range_mode, 
+                                        bool periodic_cycling_enabled) {
+
     boost::recursive_mutex::scoped_lock lock(m_dynconf_lock);
 
     waterlinked_dvl::DVLConfig conf;
@@ -432,13 +432,13 @@ void WaterlinkedDvlTcp::f_amend_dynconf(int speed_of_sound, int mounting_offset,
     conf.speed_of_sound = m_speed_of_sound;
     conf.acoustic_enabled = m_acoustic_enabled;
     conf.mounting_rotation_offset = m_mounting_rotation_offset;
+    conf.range_mode = m_range_mode;
+    conf.periodic_cycling_enabled = m_periodic_cycling_enabled;
 
     m_dynconf_server->updateConfig(conf);
 }
 
 void WaterlinkedDvlTcp::f_callback_dynconf(waterlinked_dvl::DVLConfig &config, uint32_t level) {
-  ROS_INFO("Reconfigure Request: %s", 
-            config.range_mode.c_str());
 
     if(m_acoustic_enabled != config.acoustic_enabled) {
         f_amend_acoustic_enabled(config.acoustic_enabled);
@@ -455,6 +455,15 @@ void WaterlinkedDvlTcp::f_callback_dynconf(waterlinked_dvl::DVLConfig &config, u
         m_speed_of_sound = config.speed_of_sound;
     }
 
+    if(m_range_mode != config.range_mode) {
+        f_amend_range_mode(config.range_mode);
+        m_range_mode = config.range_mode;
+    }
+
+    if(m_periodic_cycling_enabled != config.periodic_cycling_enabled) {
+        f_amend_periodic_cycling(config.periodic_cycling_enabled);
+        m_periodic_cycling_enabled = config.periodic_cycling_enabled;
+    }
 }
 
 bool WaterlinkedDvlTcp::f_amend_acoustic_enabled(bool enabled) {
@@ -509,6 +518,39 @@ bool WaterlinkedDvlTcp::f_amend_mounting_rotation(int rotation) {
     return f_write(msg);
 }
 
+bool WaterlinkedDvlTcp::f_amend_range_mode(std::string range_mode) {
+    Json::Value config_msg;
+
+    config_msg["command"] = "set_config";
+
+    Json::Value parameters;
+    parameters["range_mode"] = range_mode;
+    config_msg["parameters"] = parameters;
+
+    Json::FastWriter fast_writer;
+
+    auto msg = fast_writer.write(config_msg);
+
+    return f_write(msg);    
+}
+
+bool WaterlinkedDvlTcp::f_amend_periodic_cycling(bool enabled) {
+    Json::Value config_msg;
+
+    config_msg["command"] = "set_config";
+
+    Json::Value parameters;
+    parameters["periodic_cycling_enabled"] = enabled;
+    config_msg["parameters"] = parameters;
+
+
+    Json::FastWriter fast_writer;
+
+    auto msg = fast_writer.write(config_msg);
+
+    return f_write(msg);    
+}
+
 bool WaterlinkedDvlTcp::f_callback_acoustics_enabled(std_srvs::SetBool::Request &req,
                                                      std_srvs::SetBool::Response &res) {
 
@@ -544,6 +586,7 @@ bool WaterlinkedDvlTcp::f_callback_running_config(waterlinked_dvl::GetConfig::Re
         r.sleep();
     }
     res.config = m_running_config;
+    res.success = true;
 
     m_running_config.response_to.clear();
 
@@ -582,15 +625,28 @@ void WaterlinkedDvlTcp::f_apply_config() {
             f_amend_acoustic_enabled(m_acoustic_enabled);
         }
 
-        if(
-                m_running_config.speed_of_sound == m_speed_of_sound &&
-                m_running_config.acoustic_enabled == m_acoustic_enabled &&
-                m_running_config.mounting_rotation == m_mounting_rotation_offset
-                ) {
+        if(m_running_config.range_mode != m_range_mode) {
+            f_amend_range_mode(m_range_mode);
+        }
+
+        if(m_running_config.periodic_cycling_enabled != m_periodic_cycling_enabled) {
+            f_amend_periodic_cycling(m_periodic_cycling_enabled);
+        }
+
+        if( 
+            m_running_config.speed_of_sound == m_speed_of_sound &&
+            m_running_config.acoustic_enabled == m_acoustic_enabled &&
+            m_running_config.mounting_rotation == m_mounting_rotation_offset &&
+            m_running_config.range_mode == m_range_mode &&
+            m_running_config.periodic_cycling_enabled == m_periodic_cycling_enabled) {
             break;
         }
     }
 
-    f_amend_dynconf(m_speed_of_sound, m_mounting_rotation_offset, m_acoustic_enabled);
-
+    f_amend_dynconf(
+        m_speed_of_sound, 
+        m_mounting_rotation_offset, 
+        m_acoustic_enabled, 
+        m_range_mode, 
+        m_periodic_cycling_enabled);
 }
