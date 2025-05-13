@@ -1,12 +1,14 @@
-#include "waterlinked_dvl/waterlinked_dvl_serial.h"
+#include <rclcpp/rclcpp.hpp>
+#include "waterlinked_dvl/waterlinked_dvl_serial.h" 
 
-int main(int argc, char* argv[]) {
+int main(int argc, char * argv[])
+{
+  rclcpp::init(argc, argv);
 
-    ros::init(argc, argv, "waterlinked_dvl");
+  auto node = std::make_shared<WaterlinkedDvlSerial>();
 
-    WaterlinkedDvlSerial w;
+  rclcpp::spin(node);
+  rclcpp::shutdown();
 
-    ros::spin();
-
-    return 0;
+  return 0;
 }

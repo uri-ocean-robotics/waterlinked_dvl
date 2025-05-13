@@ -1,12 +1,14 @@
+#include <rclcpp/rclcpp.hpp>
 #include "waterlinked_dvl/waterlinked_dvl_tcp.h"
 
 int main(int argc, char* argv[]) {
 
-    ros::init(argc, argv, "waterlinked_dvl");
+    rclcpp::init(argc, argv);
 
-    WaterlinkedDvlTcp w;
+    auto node = std::make_shared<WaterlinkedDvlTcp>();
 
-    ros::spin();
-
+    rclcpp::spin(node);
+    rclcpp::shutdown();
+  
     return 0;
 }
